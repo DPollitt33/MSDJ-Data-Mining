@@ -1,0 +1,12 @@
+Normalize Data
+  UNBALANCED DATA!
+  Right now we are predicting all 3s
+  
+Response Variables
+  Number_of_Casualties- quartile, mean, median all about 1, we might not want to use this
+  Severity – Very large amount of 3s (Could be harder to use, but this is one of the major questions in the document)
+
+Variable Selection
+  Lat/Long don’t seem to buy us anything
+  Create morning, afternoon, evening, overnight out of Time variable
+  Eliminate all location data for Police Force Data
