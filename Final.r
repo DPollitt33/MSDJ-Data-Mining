@@ -2,7 +2,7 @@
 # Data mining
 # Final Project
 
-setwd("C:\\Users\\Dakota\\Documents\\Real Documents\\School\\Data Mining\\Final Project\\Project1")
+setwd("C:/Users/John/Documents/DataMining/FinalProject/MSDJ-Data-Mining")
 getwd()
 
 rm(list = ls(all = TRUE))
@@ -63,3 +63,57 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
   cleanData <- subset(cleanData, Junction_Control != -1)
   cleanData <- subset(cleanData, Second_road_class != -1)
   cleanData <- subset(cleanData, Surface != -1)
+
+  # Remove identifier
+  cleanData$Index <- NULL
+
+
+# VARIABLE SELECTION
+
+  selectedData <- cleanData
+
+  # Remove unnecessary variables
+
+  # Check correlation of numeric location data
+  numericLocData <- data.frame(EOSGR=selectedData$E_OSGR, NOSGR=selectedData$N_OSGR,
+                               Lat=selectedData$Lat, Long=selectedData$Long)
+  library(corrplot)
+  corrplot(cor(numericLocData), method="number", type="upper")
+
+  # The tested location Data is highly correlated
+  selectedData$E_OSGR <- NULL
+  selectedData$N_OSGR <- NULL
+  selectedData$Lat <- NULL
+  selectedData$Long <- NULL
+  # Delete other extra location data
+  selectedData$LA_District <- NULL
+  selectedData$LA_Highway <- NULL
+  selectedData$LSOA <- NULL
+
+  # Data is currently imbalanced in regard to severity
+  summary(cleanData$Severity)
+  # Use Stratified Sampling to get balanced representation
+  # Undersample data with 2 and 3 Severity, but use all of 1 Severity
+  severity1Stratum <- subset(selectedData, Severity == 1)
+  severity2Stratum <- subset(selectedData, Severity == 2)
+  severity3Stratum <- subset(selectedData, Severity == 3)
+
+  splSeverity2 <- sample(1:nrow(severity2Stratum), 578)
+  splSeverity3 <- sample(1:nrow(severity3Stratum), 578)
+
+  sampleSev1 <- severity1Stratum
+  sampleSev2 <- severity2Stratum[splSeverity2, ]
+  sampleSev3 <- severity3Stratum[splSeverity3, ]
+
+  # Combine into final sample
+  sampleData <- rbind(sampleSev1, sampleSev2, sampleSev3)
+  
+  # Use Random Forest to observe information gains
+  library(randomForest)
+  # Some variables have too many categories so they are taken out
+  rf.fit <- randomForest(Severity ~ . -Time -Date
+                         , data=sampleData,ntree=1000,proximity=TRUE)
+  # Check the importance of the variables
+  importance(rf.fit)
+  varImpPlot(rf.fit)
+  
