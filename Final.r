@@ -70,10 +70,10 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
 
 # VARIABLE SELECTION
 
+  # Default to clean data so we can remove variables without affecting base data
   selectedData <- cleanData
 
   # Remove unnecessary variables
-
   # Check correlation of numeric location data
   numericLocData <- data.frame(EOSGR=selectedData$E_OSGR, NOSGR=selectedData$N_OSGR,
                                Lat=selectedData$Lat, Long=selectedData$Long)
@@ -90,30 +90,69 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
   selectedData$LA_Highway <- NULL
   selectedData$LSOA <- NULL
 
-  # Data is currently imbalanced in regard to severity
-  summary(cleanData$Severity)
-  # Use Stratified Sampling to get balanced representation
-  # Undersample data with 2 and 3 Severity, but use all of 1 Severity
-  severity1Stratum <- subset(selectedData, Severity == 1)
-  severity2Stratum <- subset(selectedData, Severity == 2)
-  severity3Stratum <- subset(selectedData, Severity == 3)
+  # Not defined in guide
+  selectedData$First_road_number <- NULL
+  selectedData$Second_road_number <- NULL
 
-  splSeverity2 <- sample(1:nrow(severity2Stratum), 578)
-  splSeverity3 <- sample(1:nrow(severity3Stratum), 578)
-
-  sampleSev1 <- severity1Stratum
-  sampleSev2 <- severity2Stratum[splSeverity2, ]
-  sampleSev3 <- severity3Stratum[splSeverity3, ]
-
-  # Combine into final sample
-  sampleData <- rbind(sampleSev1, sampleSev2, sampleSev3)
+# HELPER FUNCTIONS
   
-  # Use Random Forest to observe information gains
-  library(randomForest)
-  # Some variables have too many categories so they are taken out
-  rf.fit <- randomForest(Severity ~ . -Time -Date
-                         , data=sampleData,ntree=1000,proximity=TRUE)
-  # Check the importance of the variables
-  importance(rf.fit)
-  varImpPlot(rf.fit)
+  # FUNCTION: balanceDataBySeverity
+  # Function to balance data using ROSE synthetic data library
+  # @param inputData - data to balance (train data)
+  # @param size - size of each severity stratum after balancing
+  # @return balancedTrainData - new balanced data set
+  balanceDataBySeverity <- function(inputData, size) {
+    # Subset the data by severity
+    severity1Stratum <- subset(inputData, Severity == 1)
+    severity2Stratum <- subset(inputData, Severity == 2)
+    severity3Stratum <- subset(inputData, Severity == 3)
   
+    # Use ROSE to balance the input data set
+    # ROSE can only act on binary responses so use it on severity 1 & 2
+    # and severity 2 & 3 separately
+    sev1.2.data <- rbind(severity1Stratum, severity2Stratum)
+    balanced.sev1.2.data <- ROSE(Severity~., data=sev1.2.data, N=size*2)$data
+  
+    sev2.3.data <- rbind(severity2Stratum, severity3Stratum)
+    balanced.sev2.3.data <- ROSE(Severity~., data=sev2.3.data, N=size*2)$data
+  
+    # Combine all 3 data groupings
+    balancedTrainData <- rbind(subset(balanced.sev1.2.data, Severity == 1), balanced.sev2.3.data)
+  
+    return(balancedTrainData)
+  }
+
+# USING BOOSTING TO PREDICT SEVERITY
+  library(adabag)
+  spl <- sample(1:nrow(selectedData), round(0.8*nrow(selectedData)))
+  trainData <- selectedData[spl,]
+  testData <- selectedData[-spl,]
+
+  balancedTrainData <- balanceDataBySeverity(trainData, 1000)
+
+  # Create ensemble through boosting
+  boost.fit <- boosting(Severity ~ Light+Weather+Road_Type+Surface+Number_of_Casualties
+                      +Speed_limit+Number_of_Vehicles+Day+Junction_Detail+Junction_Control
+                      +Police_attendance+Carriageway_Hazards+Ped_xing_human+Urban_or_Rural_Area
+                      +First_road_class+Second_road_class
+                      , data=balancedTrainData, mfinal=10)
+
+  # Predict on test data
+  predboosting<- predict.boosting(boost.fit, newdata=testData)
+
+  predboosting
+
+  importanceplot(boost.fit)
+
+
+
+
+
+
+
+
+
+
+
+
+
