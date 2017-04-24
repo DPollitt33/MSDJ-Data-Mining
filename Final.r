@@ -96,6 +96,7 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
 
 # HELPER FUNCTIONS
   
+  library(ROSE)
   # FUNCTION: balanceDataBySeverity
   # Function to balance data using ROSE synthetic data library
   # @param inputData - data to balance (train data)
