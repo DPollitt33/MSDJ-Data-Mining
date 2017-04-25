@@ -9,4 +9,8 @@ Response Variables
 Variable Selection
   Lat/Long don’t seem to buy us anything
   Create morning, afternoon, evening, overnight out of Time variable
+<<<<<<< 27bee86783db3584a3116c873e99e33fd90cf49a
   Eliminate all location data for Police Force Data
+=======
+  Eliminate all location data for Police Force Data
+>>>>>>> V 0.3 Cleaned datasets
