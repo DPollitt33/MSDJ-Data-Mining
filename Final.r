@@ -52,10 +52,13 @@ reset <- data
   data$LA_district <- factor(data$LA_district)
   data$LA_highway <- factor(data$LA_highway)
   data$First_road_class <- factor(data$First_road_class)
+  data$First_road_number <- factor(data$First_road_number)
   data$Road_Type <- factor(data$Road_Type)
+  data$Speed_limit <- factor(data$Speed_limit)
   data$Junction_Detail <- factor(data$Junction_Detail)
   data$Junction_Control <- factor(data$Junction_Control)
   data$Second_road_class <- factor(data$Second_road_class)
+  data$Second_road_number <- factor(data$Second_road_number)
   data$Ped_xing_human <- factor(data$Ped_xing_human)
   data$Ped_xing_physical <- factor(data$Ped_xing_physical)
   data$Light <- factor(data$Light)
@@ -424,9 +427,9 @@ reset <- data
   balancedTrainData <- balanceDataBySeverity(trainData, 1000)
   
   # Create ensemble through boosting
-  boost.fit <- boosting(Severity ~ Light+Weather+Road_Type+Surface+Number_of_Casualties
-                        +Speed_limit+Number_of_Vehicles+Day+Junction_Detail+Junction_Control
-                        +Police_attendance+Carriageway_Hazards+Ped_xing_human+Urban_or_Rural_Area
+  boost.fit <- boosting(Severity ~ Light+Weather+Road_Type+Surface+Casualties
+                        +Speed_limit+Vehicles+Day+Junction_Detail+Junction_Control
+                        +Hazards+Ped_xing_human+Urban_or_Rural
                         +First_road_class+Second_road_class
                         , data=balancedTrainData, mfinal=10)
   
