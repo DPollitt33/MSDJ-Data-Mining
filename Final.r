@@ -2,14 +2,15 @@
 # Data mining
 # Final Project
 
-<<<<<<< 27bee86783db3584a3116c873e99e33fd90cf49a
+# Select your working directory
 setwd("C:/Users/John/Documents/DataMining/FinalProject/MSDJ-Data-Mining")
-=======
 setwd('C:\\Users\\Dakota\\Documents\\Real Documents\\School\\Data Mining\\Final Project\\Project1')
->>>>>>> V 0.3 Cleaned datasets
+
 getwd()
 
 rm(list = ls(all = TRUE))
+
+# DAKOTA POLLITT
 
 # Load data
 data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
@@ -227,7 +228,6 @@ reset <- data
 
   # Clear data outside range
 
-=======
   LSOAData <- subset(LSOAData, Junction_Control != -1)
   LSOAData <- subset(LSOAData, Second_road_class != -1)
   LSOAData <- subset(LSOAData, Surface != -1)
@@ -348,23 +348,22 @@ reset <- data
   #
   # noLSOAData - 87586 obs
   # 
-  # LSOAData - 82845
+  # LSOAData - 82845 obs
+  #
+  # perfectNoLSOAData - 25281 obs
+  #
+  # perfectLSOAData - 24247 obs
   #
   ##########################
-  # Clear data outside range
-  <<<<<<< 27bee86783db3584a3116c873e99e33fd90cf49a
-  cleanData <- subset(cleanData, Junction_Control != -1)
-  cleanData <- subset(cleanData, Second_road_class != -1)
-  cleanData <- subset(cleanData, Surface != -1)
   
-  # Remove identifier
-  cleanData$Index <- NULL
   
+  
+  # JOHN CENTRITTO
   
   # VARIABLE SELECTION
   
   # Default to clean data so we can remove variables without affecting base data
-  selectedData <- cleanData
+  selectedData <- perfectNoLSOAData
   
   # Remove unnecessary variables
   # Check correlation of numeric location data
@@ -437,5 +436,3 @@ reset <- data
   predboosting
   
   importanceplot(boost.fit)
-  
->>>>>>> V 0.3 Cleaned datasets
