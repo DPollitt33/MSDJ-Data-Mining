@@ -12,9 +12,9 @@ rm(list = ls(all = TRUE))
 
 # DAKOTA POLLITT
 
-# Load data
+# LOAD DATA
 data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
-reset <- data
+
 # DATA PREPROCESSING
 
   # Rename verbose fields
@@ -89,7 +89,7 @@ reset <- data
                                        'Unclassified'=6,
                                        NA)
   levels(data$Road_Type) <-list('Roundabout'=1,
-                                'One wayt'=2,
+                                'One way'=2,
                                 'Dual cway'=3,
                                 'Single cway'=6,
                                 'Slip road'=7,
@@ -137,7 +137,7 @@ reset <- data
                             'Dark - no lighting'=6,
                             'Dark - light unknown'=7,
                             NA)
-  levels(data$Weather) <-list('Fines'=1,
+  levels(data$Weather) <-list('Fine'=1,
                               'Rain'=2,
                               'Snowing'=3,
                               'Fine/Windy'=4,
@@ -211,151 +211,141 @@ reset <- data
                                                                  'Evening',
                                                                  'Night'))
   
+  # Convert Date to US format
+  data$Date <- format(as.Date(data$Date, format='%d/%m/%Y'), format='%m/%d')
+  
+  # Create isHoliday (UK Bank Days for 2012)
+  holidays <- c('01/01', '01/02', '03/17', '04/06', '04/09',
+                '05/07', '06/04', '06/05', '07/12', '08/06',
+                '08/27', '11/30', '12/25', '12/26')
+  isHoliday <- c(ifelse(data$Date %in% holidays, TRUE, FALSE))
+  
+  data[,'isHoliday'] <- isHoliday
+  
+  
+  # Create isWeekend
+  isWeekend <- c(ifelse(data$Day %in% c('F', 'Sa', 'Su'), TRUE, FALSE))
+  data[,'isWeekend'] <- isWeekend
+  
+  # Create Month
+  months <- format(as.Date(data$Date, format='%m/%d'), format='%m')
+  months <- c(ifelse(months == '01',
+                     1,
+                     ifelse(months == '02',
+                            2,
+                            ifelse(months == '03',
+                                   3,
+                                   ifelse(months == '04',
+                                          4,
+                                          ifelse(months == '05',
+                                                 5,
+                                                 ifelse(months == '06',
+                                                        6,
+                                                        ifelse(months == '07',
+                                                               7,
+                                                               ifelse(months == '08',
+                                                                      8,
+                                                                      ifelse(months == '09',
+                                                                             9,
+                                                                             ifelse(months == '10',
+                                                                                    10,
+                                                                                    ifelse(months == '11',
+                                                                                           11,
+                                                                                           ifelse(months == '12',
+                                                                                                  12,
+                                                                                                  NA)))))))))))))
+  
+  data[,'Month'] <- months
+  data$Month <- factor(data$Month, levels=c(1:12), labels=c('JAN',
+                                                            'FEB',
+                                                            'MAR',
+                                                            'APR',
+                                                            'MAY',
+                                                            'JUN',
+                                                            'JUL',
+                                                            'AUG',
+                                                            'SEP',
+                                                            'OCT',
+                                                            'NOV',
+                                                            'DEC'))
+  
+  
   # Remove intuitively useless columns
   drop <- c('Index',
-            'E_OSGR', 
+            'E_OSGR',
             'N_OSGR',
-            'Long',
-            'Lat',
+            'Date',
             'Time',
             'LA_highway',
-            'Police_attendance')
+            'Police_attendance',
+            'LSOA')
   
   data = data[,!names(data) %in% drop]
   
-  # LSOA might not be useful
-  noLSOAData <- data[,!names(data) %in% 'LSOA']
-  
-  # Clean missing LSOA values
-  LSOAData <- data[!(is.na(data$LSOA) | data$LSOA==''),]
-
-  # Clear data outside range
-
-  LSOAData <- subset(LSOAData, Junction_Control != -1)
-  LSOAData <- subset(LSOAData, Second_road_class != -1)
-  LSOAData <- subset(LSOAData, Surface != -1)
-  LSOAData <- subset(LSOAData, First_road_class != 6)
-  LSOAData <- subset(LSOAData, Road_Type != 9)
-  LSOAData <- subset(LSOAData, Second_road_class != 6)
-  LSOAData <- subset(LSOAData, Light != 7)
-  LSOAData <- subset(LSOAData, Weather != 9)
-  
-  # Clear non-LSOA data of NA
-  noLSOAData <- subset(noLSOAData, Junction_Control != -1)
-  noLSOAData <- subset(noLSOAData, Second_road_class != -1)
-  noLSOAData <- subset(noLSOAData, Surface != -1)
-  noLSOAData <- subset(noLSOAData, First_road_class != 6)
-  noLSOAData <- subset(noLSOAData, Road_Type != 9)
-  noLSOAData <- subset(noLSOAData, Second_road_class != 6)
-  noLSOAData <- subset(noLSOAData, Light != 7)
-  noLSOAData <- subset(noLSOAData, Weather != 9)
+  # Clear data of NA
+  cleanData <- subset(data, Junction_Control != -1)
+  cleanData <- subset(cleanData, Second_road_class != -1)
+  cleanData <- subset(cleanData, Surface != -1)
   
   # Prep cleaner datasets
-  perfectLSOAData <- LSOAData
-  perfectNoLSOAData <- noLSOAData
-  
-  # Reclassifying levels for LSOAData
-  levels(perfectLSOAData$First_road_class) <-list('Motorway'=1,
-                                                 'A(M)'=2,
-                                                 'A'=3,
-                                                 'B'=4,
-                                                 'C'=5,
-                                                 NA)
-  levels(perfectLSOAData$Road_Type) <-list('Roundabout'=1,
-                                'One wayt'=2,
-                                'Dual cway'=3,
-                                'Single cway'=6,
-                                'Slip road'=7,
-                                'One way/Slip road'=12,
-                                NA)
-  levels(perfectLSOAData$Second_road_class) <-list('Not at junction'=0,
-                                        'Motorway'=1,
-                                        'A(M)'=2,
-                                        'A'=3,
-                                        'B'=4,
-                                        'C'=5,
-                                        NA)
-  levels(perfectLSOAData$Light) <-list('Daylight'=1,
-                            'Dark - lights lit'=4,
-                            'Dark - lights unlit'=5,
-                            'Dark - no lighting'=6,
-                            NA)
-  levels(perfectLSOAData$Weather) <-list('Fines'=1,
-                              'Rain'=2,
-                              'Snowing'=3,
-                              'Fine/Windy'=4,
-                              'Raining/Windy'=5,
-                              'Snowing/Windy'=6,
-                              'Fog/Mist'=7,
-                              'Other'=8,
-                              NA)
+  perfectData <- cleanData
   
   # Reclassifying levels for noLSOAData
-  levels(perfectNoLSOAData$First_road_class) <-list('Motorway'=1,
-                                                  'A(M)'=2,
-                                                  'A'=3,
-                                                  'B'=4,
-                                                  'C'=5,
-                                                  NA)
-  levels(perfectNoLSOAData$Road_Type) <-list('Roundabout'=1,
-                                           'One wayt'=2,
-                                           'Dual cway'=3,
-                                           'Single cway'=6,
-                                           'Slip road'=7,
-                                           'One way/Slip road'=12,
-                                           NA)
-  levels(perfectNoLSOAData$Second_road_class) <-list('Not at junction'=0,
-                                                   'Motorway'=1,
-                                                   'A(M)'=2,
-                                                   'A'=3,
-                                                   'B'=4,
-                                                   'C'=5,
-                                                   NA)
-  levels(perfectNoLSOAData$Light) <-list('Daylight'=1,
-                                       'Dark - lights lit'=4,
-                                       'Dark - lights unlit'=5,
-                                       'Dark - no lighting'=6,
+  levels(perfectData$First_road_class) <-list('Motorway'=1,
+                                              'A(M)'=2,
+                                              'A'=3,
+                                              'B'=4,
+                                              'C'=5,
+                                              NA)
+  levels(perfectData$Road_Type) <-list('Roundabout'=1,
+                                       'One way'=2,
+                                       'Dual cway'=3,
+                                       'Single cway'=6,
+                                       'Slip road'=7,
+                                       'One way/Slip road'=12,
                                        NA)
-  levels(perfectNoLSOAData$Weather) <-list('Fines'=1,
-                                         'Rain'=2,
-                                         'Snowing'=3,
-                                         'Fine/Windy'=4,
-                                         'Raining/Windy'=5,
-                                         'Snowing/Windy'=6,
-                                         'Fog/Mist'=7,
-                                         'Other'=8,
-                                         NA)
+  levels(perfectData$Second_road_class) <-list('Not at junction'=0,
+                                               'Motorway'=1,
+                                               'A(M)'=2,
+                                               'A'=3,
+                                               'B'=4,
+                                               'C'=5,
+                                               NA)
+  levels(perfectData$Light) <-list('Daylight'=1,
+                                   'Dark - lights lit'=4,
+                                   'Dark - lights unlit'=5,
+                                   'Dark - no lighting'=6,
+                                   NA)
+  levels(perfectData$Weather) <-list('Fine'=1,
+                                     'Rain'=2,
+                                     'Snowing'=3,
+                                     'Fine/Windy'=4,
+                                     'Raining/Windy'=5,
+                                     'Snowing/Windy'=6,
+                                     'Fog/Mist'=7,
+                                     'Other'=8,
+                                     NA)
   
   
   # Remove all unknowns and unclassifieds
-  perfectLSOAData <- subset(perfectLSOAData, !is.na(Junction_Control))
-  perfectLSOAData <- subset(perfectLSOAData, !is.na(Second_road_class))
-  perfectLSOAData <- subset(perfectLSOAData, !is.na(Surface))
-  perfectLSOAData <- subset(perfectLSOAData, !is.na(First_road_class))
-  perfectLSOAData <- subset(perfectLSOAData, !is.na(Road_Type))
-  perfectLSOAData <- subset(perfectLSOAData, !is.na(Second_road_class))
-  perfectLSOAData <- subset(perfectLSOAData, !is.na(Light))
-  perfectLSOAData <- subset(perfectLSOAData, !is.na(Weather))
+  perfectData <- subset(perfectData, !is.na(First_road_class))
+  perfectData <- subset(perfectData, !is.na(Second_road_class))
+  perfectData <- subset(perfectData, !is.na(Road_Type))
+  perfectData <- subset(perfectData, !is.na(Light))
+  perfectData <- subset(perfectData, !is.na(Weather))
   
-  perfectNoLSOAData <- subset(perfectNoLSOAData, !is.na(Junction_Control))
-  perfectNoLSOAData <- subset(perfectNoLSOAData, !is.na(Second_road_class))
-  perfectNoLSOAData <- subset(perfectNoLSOAData, !is.na(Surface))
-  perfectNoLSOAData <- subset(perfectNoLSOAData, !is.na(First_road_class))
-  perfectNoLSOAData <- subset(perfectNoLSOAData, !is.na(Road_Type))
-  perfectNoLSOAData <- subset(perfectNoLSOAData, !is.na(Second_road_class))
-  perfectNoLSOAData <- subset(perfectNoLSOAData, !is.na(Light))
-  perfectNoLSOAData <- subset(perfectNoLSOAData, !is.na(Weather))
+  
+  # Remove temporary vectors
+  rm(drop, holidays, isHoliday, isWeekend, months, period)
   
   ##########################
-  # CLEAN DATA SETS
+  # DATA SETS
   #
-  # noLSOAData - 87586 obs
-  # 
-  # LSOAData - 82845 obs
+  # data - 145571 obs. of 28 variables
   #
-  # perfectNoLSOAData - 25281 obs
+  # cleanData - 87586 obs. of 28 variables
   #
-  # perfectLSOAData - 24247 obs
+  # perfectData - 25281 obs. of 28 variables
   #
   ##########################
   
@@ -366,7 +356,7 @@ reset <- data
   # VARIABLE SELECTION
   
   # Default to clean data so we can remove variables without affecting base data
-  selectedData <- perfectNoLSOAData
+  selectedData <- perfectData
   
   # Remove unnecessary variables
   # Check correlation of numeric location data
