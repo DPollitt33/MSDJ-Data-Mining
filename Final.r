@@ -222,6 +222,9 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
   
   data[,'isHoliday'] <- isHoliday
   
+  # Make isHoliday a Factor to cooperate with glm
+  data$isHoliday <- factor(data$isHoliday)
+  
   
   # Create isWeekend
   isWeekend <- c(ifelse(data$Day %in% c('F', 'Sa', 'Su'), TRUE, FALSE))
@@ -282,6 +285,9 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
             'LA_highway',
             'Police_attendance',
             'LSOA')
+  
+  # Remove columns with too many levels, giving R trouble
+  drop <- c(drop, 'First_road_number', 'Second_road_number')
   
   data = data[,!names(data) %in% drop]
   
