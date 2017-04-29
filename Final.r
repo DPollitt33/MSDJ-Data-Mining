@@ -287,7 +287,10 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
             'LSOA')
   
   # Remove columns with too many levels, giving R trouble
-  drop <- c(drop, 'First_road_number', 'Second_road_number')
+  drop <- c(drop,
+            'First_road_number',
+            'Second_road_number',
+            'LA_district')
   
   data = data[,!names(data) %in% drop]
   
