@@ -227,6 +227,9 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
   isWeekend <- c(ifelse(data$Day %in% c('F', 'Sa', 'Su'), TRUE, FALSE))
   data[,'isWeekend'] <- isWeekend
   
+  # Make isWeekend a Factor to cooperate with glm
+  data$isWeekend <- factor(data$isWeekend)
+  
   # Create Month
   months <- format(as.Date(data$Date, format='%m/%d'), format='%m')
   months <- c(ifelse(months == '01',
@@ -335,8 +338,88 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
   perfectData <- subset(perfectData, !is.na(Weather))
   
   
+  # Prepping data without Junction_Control, First_road_class, Second_road_class
+  
+  # Remove columns with high impact loss
+  drop2 <- c('Junction_Control',
+             'First_road_class',
+             'Second_road_class')
+  
+  bigData <- data[,!names(data) %in% drop2]
+  
+  # Clean big data
+  cleanBigData <- subset(bigData, Surface != -1)
+  
+  levels(cleanBigData$Road_Type) <-list('Roundabout'=1,
+                                        'One way'=2,
+                                        'Dual cway'=3,
+                                        'Single cway'=6,
+                                        'Slip road'=7,
+                                        'One way/Slip road'=12,
+                                        NA)
+  levels(cleanBigData$Light) <-list('Daylight'=1,
+                                    'Dark - lights lit'=4,
+                                    'Dark - lights unlit'=5,
+                                    'Dark - no lighting'=6,
+                                    NA)
+  levels(cleanBigData$Weather) <-list('Fine'=1,
+                                      'Rain'=2,
+                                      'Snowing'=3,
+                                      'Fine/Windy'=4,
+                                      'Raining/Windy'=5,
+                                      'Snowing/Windy'=6,
+                                      'Fog/Mist'=7,
+                                      'Other'=8,
+                                      NA)
+  cleanBigData <- subset(cleanBigData, !is.na(Road_Type))
+  cleanBigData <- subset(cleanBigData, !is.na(Light))
+  cleanBigData <- subset(cleanBigData, !is.na(Weather))
+  
+  
+  # Prepping data that only contains significant variables for glm()
+  sigData <- data
+  keep <- c('Lat',
+            'Police_Force',
+            'Vehicles',
+            'Casualties',
+            'Road_Type',
+            'Speed_limit',
+            'Ped_xing_physical',
+            'Light',
+            'Weather',
+            'Surface')
+  
+  sigData <- sigData[, names(sigData) %in% keep]
+  
+  sigData <- subset(sigData, Surface != -1)
+  
+  levels(sigData$Road_Type) <-list('Roundabout'=1,
+                                   'One way'=2,
+                                   'Dual cway'=3,
+                                   'Single cway'=6,
+                                   'Slip road'=7,
+                                   'One way/Slip road'=12,
+                                   NA)
+  levels(sigData$Light) <-list('Daylight'=1,
+                               'Dark - lights lit'=4,
+                               'Dark - lights unlit'=5,
+                               'Dark - no lighting'=6,
+                               NA)
+  levels(sigData$Weather) <-list('Fine'=1,
+                                 'Rain'=2,
+                                 'Snowing'=3,
+                                 'Fine/Windy'=4,
+                                 'Raining/Windy'=5,
+                                 'Snowing/Windy'=6,
+                                 'Fog/Mist'=7,
+                                 'Other'=8,
+                                 NA)
+  sigData <- subset(sigData, !is.na(Road_Type))
+  sigData <- subset(sigData, !is.na(Light))
+  sigData <- subset(sigData, !is.na(Weather))
+  
   # Remove temporary vectors
-  rm(drop, holidays, isHoliday, isWeekend, months, period)
+  rm(drop, drop2, keep, holidays, isHoliday, isWeekend, months, period)
   
   ##########################
   # DATA SETS
@@ -346,6 +429,12 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
   # cleanData - 87586 obs. of 28 variables
   #
   # perfectData - 25281 obs. of 28 variables
+  #
+  # bigData - 145571 obs. of 25 variables
+  #
+  # cleanBigData - 140057 obs. of 25 variables
+  #
+  # sigData - 140057 obs. of 10 variables
   #
   ##########################
   
