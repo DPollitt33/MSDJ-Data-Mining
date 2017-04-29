@@ -275,6 +275,12 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
                                                             'NOV',
                                                             'DEC'))
   
+  # Perform corrplot
+  library(corrplot)
+  numericLocData <- data.frame(EOSGR=data$E_OSGR, NOSGR=data$N_OSGR,
+                               Lat=data$Lat, Long=data$Long)
+  corrplot(cor(numericLocData), method='number', type='upper')
+  
   
   # Remove intuitively useless columns
   drop <- c('Index',
