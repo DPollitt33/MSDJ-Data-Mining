@@ -293,7 +293,7 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
   # Prep cleaner datasets
   perfectData <- cleanData
   
-  # Reclassifying levels for noLSOAData
+  # Reclassifying levels for perfectData
   levels(perfectData$First_road_class) <-list('Motorway'=1,
                                               'A(M)'=2,
                                               'A'=3,
@@ -418,8 +418,35 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
   sigData <- subset(sigData, !is.na(Light))
   sigData <- subset(sigData, !is.na(Weather))
   
+  
+  # Splitting data by significant police forces
+  pf <- c('Police_Force')
+  lancashireData <- data[which(data$Police_Force=='4'),]
+  northumbriaData <- data[which(data$Police_Force=='10'),]
+  northYorkshireData <- data[which(data$Police_Force=='12'),]
+  southYorkshireData <- data[which(data$Police_Force=='14'),]
+  humbersideData <- data[which(data$Police_Force=='16'),]
+  lincolnshireData <- data[which(data$Police_Force=='32'),]
+  gloucestershireData <- data[which(data$Police_Force=='53'),]
+  grampianData <- data[which(data$Police_Force=='92'),]
+  fifeData <- data[which(data$Police_Force=='94'),]
+  lothianData <- data[which(data$Police_Force=='95'),]
+  strathclydeData <- data[which(data$Police_Force=='97'),]
+  
+  lancashireData <- lancashireData[, !names(lancashireData) %in% 'Police_Force']
+  northumbriaData <- northumbriaData[, !names(northumbriaData) %in% 'Police_Force']
+  northYorkshireData <- northYorkshireData[, !names(northYorkshireData) %in% 'Police_Force']
+  southYorkshireData <- southYorkshireData[, !names(southYorkshireData) %in% 'Police_Force']
+  humbersideData <- humbersideData[, !names(humbersideData) %in% 'Police_Force']
+  lincolnshireData <- lincolnshireData[, !names(lincolnshireData) %in% 'Police_Force']
+  gloucestershireData <- gloucestershireData[, !names(gloucestershireData) %in% 'Police_Force']
+  grampianData <- grampianData[, !names(grampianData) %in% 'Police_Force']
+  fifeData <- fifeData[, !names(fifeData) %in% 'Police_Force']
+  lothianData <- lothianData[, !names(lothianData) %in% 'Police_Force']
+  strathclydeData <- strathclydeData[, !names(strathclydeData) %in% 'Police_Force']
+  
   # Remove temporary vectors
-  rm(drop, drop2, keep, holidays, isHoliday, isWeekend, months, period)
+  rm(drop, drop2, keep, holidays, isHoliday, isWeekend, months, period, pf)
   
   ##########################
   # DATA SETS
@@ -435,6 +462,8 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
   # cleanBigData - 140057 obs. of 25 variables
   #
   # sigData - 140057 obs. of 10 variables
+  #
+  # data sets for each significant police_force by glm of full data
   #
   ##########################
   
