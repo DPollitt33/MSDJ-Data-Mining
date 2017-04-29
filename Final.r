@@ -294,6 +294,9 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
   
   data = data[,!names(data) %in% drop]
   
+  # Remove Speed_limit outlier
+  data = subset(data, as.numeric(Speed_limit) != 1)
+  
   # Clear data of NA
   cleanData <- subset(data, Junction_Control != -1)
   cleanData <- subset(cleanData, Second_road_class != -1)
