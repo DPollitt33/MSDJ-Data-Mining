@@ -204,7 +204,7 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
                                                         6,
                                                         NA)))))))
   
-  data[,'Time Period'] <- factor(period, levels=c(1:6), labels=c('Overnight',
+  data[,'Time_Period'] <- factor(period, levels=c(1:6), labels=c('Overnight',
                                                                  'Early Morning',
                                                                  'Morning',
                                                                  'Afternoon',
@@ -479,80 +479,146 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
   
   
   # JOHN CENTRITTO
+
+
+# HELPER FUNCTIONS
+
+library(ROSE)
+# FUNCTION: balanceDataBySeverity
+# Function to balance data using ROSE synthetic data library
+# @param inputData - data to balance (train data) Can only handle continous and
+# categorical variables due to ROSE API
+# @param size - size of each severity stratum after balancing
+# @return balancedTrainData - new balanced data set
+balanceDataBySeverity <- function(inputData, size) {
+  # Subset the data by severity
+  severity1Stratum <- subset(inputData, Severity == "Fatal")
+  severity2Stratum <- subset(inputData, Severity == "Serious")
+  severity3Stratum <- subset(inputData, Severity == "Slight")
   
-  # VARIABLE SELECTION
+  # Use ROSE to balance the input data set
+  # ROSE can only act on binary responses so use it on severity 1 & 2
+  # and severity 2 & 3 separately
+  sev1.2.data <- rbind(severity1Stratum, severity2Stratum)
+  balanced.sev1.2.data <- ROSE(Severity~., data=sev1.2.data, N=size*2)$data
   
-  # Default to clean data so we can remove variables without affecting base data
-  selectedData <- perfectData
+  sev2.3.data <- rbind(severity2Stratum, severity3Stratum)
+  balanced.sev2.3.data <- ROSE(Severity~., data=sev2.3.data, N=size*2)$data
   
-  # Remove unnecessary variables
-  # Check correlation of numeric location data
-  numericLocData <- data.frame(EOSGR=selectedData$E_OSGR, NOSGR=selectedData$N_OSGR,
-                               Lat=selectedData$Lat, Long=selectedData$Long)
-  library(corrplot)
-  corrplot(cor(numericLocData), method="number", type="upper")
+  # Combine all 3 data groupings
+  balancedTrainData <- rbind(subset(balanced.sev1.2.data, Severity == "Fatal"), balanced.sev2.3.data)
   
-  # The tested location Data is highly correlated
-  selectedData$E_OSGR <- NULL
-  selectedData$N_OSGR <- NULL
-  selectedData$Lat <- NULL
-  selectedData$Long <- NULL
-  # Delete other extra location data
-  selectedData$LA_District <- NULL
-  selectedData$LA_Highway <- NULL
-  selectedData$LSOA <- NULL
-  
-  # Not defined in guide
-  selectedData$First_road_number <- NULL
-  selectedData$Second_road_number <- NULL
-  
-  # HELPER FUNCTIONS
-  
-  library(ROSE)
-  # FUNCTION: balanceDataBySeverity
-  # Function to balance data using ROSE synthetic data library
-  # @param inputData - data to balance (train data)
-  # @param size - size of each severity stratum after balancing
-  # @return balancedTrainData - new balanced data set
-  balanceDataBySeverity <- function(inputData, size) {
-    # Subset the data by severity
-    severity1Stratum <- subset(inputData, Severity == 1)
-    severity2Stratum <- subset(inputData, Severity == 2)
-    severity3Stratum <- subset(inputData, Severity == 3)
-    
-    # Use ROSE to balance the input data set
-    # ROSE can only act on binary responses so use it on severity 1 & 2
-    # and severity 2 & 3 separately
-    sev1.2.data <- rbind(severity1Stratum, severity2Stratum)
-    balanced.sev1.2.data <- ROSE(Severity~., data=sev1.2.data, N=size*2)$data
-    
-    sev2.3.data <- rbind(severity2Stratum, severity3Stratum)
-    balanced.sev2.3.data <- ROSE(Severity~., data=sev2.3.data, N=size*2)$data
-    
-    # Combine all 3 data groupings
-    balancedTrainData <- rbind(subset(balanced.sev1.2.data, Severity == 1), balanced.sev2.3.data)
-    
-    return(balancedTrainData)
-  }
-  
-  # USING BOOSTING TO PREDICT SEVERITY
-  library(adabag)
-  spl <- sample(1:nrow(selectedData), round(0.8*nrow(selectedData)))
-  trainData <- selectedData[spl,]
-  testData <- selectedData[-spl,]
-  
-  balancedTrainData <- balanceDataBySeverity(trainData, 1000)
-  
-  # Create ensemble through boosting
-  boost.fit <- boosting(Severity ~ Light+Weather+Road_Type+Surface+Casualties
-                        +Speed_limit+Vehicles+Day+Junction_Detail+Junction_Control
-                        +Hazards+Ped_xing_human+Urban_or_Rural
-                        +First_road_class+Second_road_class
-                        , data=balancedTrainData, mfinal=10)
-  
-  # Predict on test data
-  predboosting<- predict.boosting(boost.fit, newdata=testData)
-  
-  predboosting
-  
-  importanceplot(boost.fit)
+  return(balancedTrainData)
+}
+
+# USING A SIMPLE DECISION TREE TO PREDICT SEVERITY
+
+# Sample 80% of the data for training
+spl <- sample(1:nrow(cleanBigData), round(0.8*nrow(cleanBigData)))
+trainData <- cleanBigData[spl,]
+testData <- cleanBigData[-spl,]
+
+library(tree)
+# Train decision tree model
+tree.fit <- tree(Severity ~ .  -Police_Force
+                 , data=trainData)
+
+summary(tree.fit)
+
+# View the tree
+plot(tree.fit)  
+text(tree.fit, pretty=0)   
+
+# Use the decision tree to predict on the test data
+tree.pred <- predict(tree.fit, testData, type="class") 
+(confMatrix <- table(tree.pred, testData$Severity))
+# Find the accuracy of the predictions
+(accuracy <- (confMatrix[1] + confMatrix[5] +confMatrix[9])/nrow(testData))  
+
+
+# USING BOOSTING TO PREDICT SEVERITY
+library(adabag)
+spl <- sample(1:nrow(cleanBigData), round(0.3*nrow(cleanBigData)))
+smallerSet <- cleanBigData[spl,] #Boosting is computationally expensive. Use less data
+# Now create train and test set
+spl <- sample(1:nrow(smallerSet), round(0.8*nrow(smallerSet)))
+trainData <- smallerSet[spl,]
+testData <- smallerSet[-spl,]
+
+# Create ensemble through boosting
+boost.fit <- boosting(Severity ~ Light+Weather+Road_Type+Surface+Casualties
+                      +Speed_limit+Vehicles+Ped_xing_human+Urban_or_Rural
+                      , data=trainData, mfinal=10,control = rpart.control(cp = -1))
+
+# Predict on test data
+predboosting<- predict.boosting(boost.fit, newdata=testData)
+predboosting
+
+# Balance data with respect to severity and retry boosting
+# Get train and test suite on cleanBigData set
+spl <- sample(1:nrow(cleanBigData), round(0.9*nrow(cleanBigData)))
+trainData <- cleanBigData[spl,]
+testData <- cleanBigData[-spl,]
+
+# Call balance function
+set.seed(10)
+balancedTrainData <- balanceDataBySeverity(trainData, 1000)
+
+# Create ensemble with balanced data
+boost.fit <- boosting(Severity ~ Light+Weather+Road_Type+Surface+Casualties
+                      +Speed_limit+Vehicles+Day
+                      +Hazards+Ped_xing_human+Urban_or_Rural
+                      , data=balancedTrainData, mfinal=10)
+
+# Predict on test data
+predboosting<- predict.boosting(boost.fit, newdata=testData)
+predboosting
+
+#Plot variable importance
+importanceplot(boost.fit)
+
+
+
+# USING LOGISTIC REGRESSION TO PREDICT FATAL ACCIDENTS
+
+# Change data to either fatal (1) or non fatal (2,3)
+binarySelectedData <- cleanBigData
+binarySelectedData$Severity <- ifelse(binarySelectedData$Severity != "Fatal","NonFatal","Fatal")
+binarySelectedData$Severity <- as.factor(binarySelectedData$Severity)
+# Take out road numbers, too many categories
+
+# Create test/train set from this binary response value data
+spl <- sample(1:nrow(binarySelectedData), round(0.9*nrow(binarySelectedData)))
+trainData <- binarySelectedData[spl,]
+testData <- binarySelectedData[-spl,]
+
+# Fit a logistic model
+glm.fit <- glm(Severity ~ . -Police_Force
+               , data=trainData, family = "binomial")
+
+summary(glm.fit)
+
+# Predict on test data with logistic model
+fatal.probs <- predict(glm.fit, newdata=testData, type = "response")
+# Check results of probabilites
+fatal.pred <- rep("Non-Fatal", length(fatal.probs))
+fatal.pred[fatal.probs < 0.99] <- "FATAL"
+table(fatal.pred, testData$Severity)
+
+
+# Remove variables that are insignificant and train model again
+glm.fit <- glm(Severity ~ . -Day -isWeekend -Ped_xing_human -Month
+               -Hazards -Special -Ped_xing_human -Lat -Long -Police_Force
+               , data=trainData, family = "binomial")
+
+summary(glm.fit)
+
+# Predict on test data with logistic model
+fatal.probs <- predict(glm.fit, newdata=testData, type = "response")
+# Check results of probabilites
+fatal.pred <- rep("Non-Fatal", length(fatal.probs))
+fatal.pred[fatal.probs < 0.99] <- "FATAL"
+( confTable <- table(fatal.pred, testData$Severity) )
+( accuracy <- (confTable[1] + confTable[4])/(nrow(testData)) )
+( fatalRecall <- confTable[1] / (confTable[1]+confTable[2]) )
+
