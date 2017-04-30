@@ -523,6 +523,7 @@ balanceDataBySeverity <- function(inputData, size) {
 # USING A SIMPLE DECISION TREE TO PREDICT SEVERITY
 
 # Sample 80% of the data for training
+set.seed(1)
 spl <- sample(1:nrow(cleanBigData), round(0.8*nrow(cleanBigData)))
 trainData <- cleanBigData[spl,]
 testData <- cleanBigData[-spl,]
@@ -547,6 +548,7 @@ tree.pred <- predict(tree.fit, testData, type="class")
 
 # USING BOOSTING TO PREDICT SEVERITY
 library(adabag)
+set.seed(3)
 spl <- sample(1:nrow(cleanBigData), round(0.3*nrow(cleanBigData)))
 smallerSet <- cleanBigData[spl,] #Boosting is computationally expensive. Use less data
 # Now create train and test set
@@ -565,12 +567,12 @@ predboosting
 
 # Balance data with respect to severity and retry boosting
 # Get train and test suite on cleanBigData set
+set.seed(4)
 spl <- sample(1:nrow(cleanBigData), round(0.9*nrow(cleanBigData)))
 trainData <- cleanBigData[spl,]
 testData <- cleanBigData[-spl,]
 
 # Call balance function
-set.seed(10)
 balancedTrainData <- balanceDataBySeverity(trainData, 1000)
 
 # Create ensemble with balanced data
@@ -594,15 +596,15 @@ importanceplot(boost.fit)
 binarySelectedData <- cleanBigData
 binarySelectedData$Severity <- ifelse(binarySelectedData$Severity != "Fatal","NonFatal","Fatal")
 binarySelectedData$Severity <- as.factor(binarySelectedData$Severity)
-# Take out road numbers, too many categories
 
 # Create test/train set from this binary response value data
-spl <- sample(1:nrow(binarySelectedData), round(0.9*nrow(binarySelectedData)))
+set.seed(3)
+spl <- sample(1:nrow(binarySelectedData), round(0.8*nrow(binarySelectedData)))
 trainData <- binarySelectedData[spl,]
 testData <- binarySelectedData[-spl,]
 
 # Fit a logistic model
-glm.fit <- glm(Severity ~ . -Police_Force
+glm.fit <- glm(Severity ~ . -Lat -Long 
                , data=trainData, family = "binomial")
 
 summary(glm.fit)
@@ -616,8 +618,8 @@ table(fatal.pred, testData$Severity)
 
 
 # Remove variables that are insignificant and train model again
-glm.fit <- glm(Severity ~ . -Day -isWeekend -Ped_xing_human -Month
-               -Hazards -Special -Ped_xing_human -Lat -Long -Police_Force
+glm.fit <- glm(Severity ~ . -isWeekend -isHoliday-Ped_xing_human -Month
+                -Lat -Long -Police_Force
                , data=trainData, family = "binomial")
 
 summary(glm.fit)
