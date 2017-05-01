@@ -614,7 +614,11 @@ fatal.probs <- predict(glm.fit, newdata=testData, type = "response")
 # Check results of probabilites
 fatal.pred <- rep("Non-Fatal", length(fatal.probs))
 fatal.pred[fatal.probs < 0.99] <- "FATAL"
-table(fatal.pred, testData$Severity)
+# Measure model's performance
+( confTable <- table(fatal.pred, testData$Severity) )
+( accuracy <- (confTable[1] + confTable[4])/(nrow(testData)) )
+( fatalRecall <- confTable[1] / (confTable[1]+confTable[2]) )
+( fatalPrecision <- confTable[1] / (confTable[1]+confTable[3]) )
 
 
 # Remove variables that are insignificant and train model again
@@ -629,7 +633,9 @@ fatal.probs <- predict(glm.fit, newdata=testData, type = "response")
 # Check results of probabilites
 fatal.pred <- rep("Non-Fatal", length(fatal.probs))
 fatal.pred[fatal.probs < 0.99] <- "FATAL"
+# Measure model's performance
 ( confTable <- table(fatal.pred, testData$Severity) )
 ( accuracy <- (confTable[1] + confTable[4])/(nrow(testData)) )
 ( fatalRecall <- confTable[1] / (confTable[1]+confTable[2]) )
+( fatalPrecision <- confTable[1] / (confTable[1]+confTable[3]) )
 
