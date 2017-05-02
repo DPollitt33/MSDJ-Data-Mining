@@ -422,18 +422,17 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
   
   
   # Splitting data by significant police forces
-  pf <- c('Police_Force')
-  lancashireData <- data[which(data$Police_Force=='4'),]
-  northumbriaData <- data[which(data$Police_Force=='10'),]
-  northYorkshireData <- data[which(data$Police_Force=='12'),]
-  southYorkshireData <- data[which(data$Police_Force=='14'),]
-  humbersideData <- data[which(data$Police_Force=='16'),]
-  lincolnshireData <- data[which(data$Police_Force=='32'),]
-  gloucestershireData <- data[which(data$Police_Force=='53'),]
-  grampianData <- data[which(data$Police_Force=='92'),]
-  fifeData <- data[which(data$Police_Force=='94'),]
-  lothianData <- data[which(data$Police_Force=='95'),]
-  strathclydeData <- data[which(data$Police_Force=='97'),]
+  lancashireData <- cleanBigData[which(cleanBigData$Police_Force=='4'),]
+  northumbriaData <- cleanBigData[which(cleanBigData$Police_Force=='10'),]
+  northYorkshireData <- cleanBigData[which(cleanBigData$Police_Force=='12'),]
+  southYorkshireData <- cleanBigData[which(cleanBigData$Police_Force=='14'),]
+  humbersideData <- cleanBigData[which(cleanBigData$Police_Force=='16'),]
+  lincolnshireData <- cleanBigData[which(cleanBigData$Police_Force=='32'),]
+  gloucestershireData <- cleanBigData[which(cleanBigData$Police_Force=='53'),]
+  grampianData <- cleanBigData[which(cleanBigData$Police_Force=='92'),]
+  fifeData <- cleanBigData[which(cleanBigData$Police_Force=='94'),]
+  lothianData <- cleanBigData[which(cleanBigData$Police_Force=='95'),]
+  strathclydeData <- cleanBigData[which(cleanBigData$Police_Force=='97'),]
   
   lancashireData <- lancashireData[, !names(lancashireData) %in% 'Police_Force']
   northumbriaData <- northumbriaData[, !names(northumbriaData) %in% 'Police_Force']
@@ -448,7 +447,7 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
   strathclydeData <- strathclydeData[, !names(strathclydeData) %in% 'Police_Force']
   
   # Remove temporary vectors
-  rm(drop, drop2, keep, holidays, isHoliday, isWeekend, months, period, pf, numericLocData)
+  rm(drop, drop2, keep, holidays, isHoliday, isWeekend, months, period, numericLocData)
   
   ##########################
   # DATA SETS
