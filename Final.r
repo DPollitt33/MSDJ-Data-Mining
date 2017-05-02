@@ -639,3 +639,142 @@ fatal.pred[fatal.probs < 0.99] <- "FATAL"
 ( fatalRecall <- confTable[1] / (confTable[1]+confTable[2]) )
 ( fatalPrecision <- confTable[1] / (confTable[1]+confTable[3]) )
 
+
+
+#MATT KAPLAN
+#plot causalty tree
+#plot linear regression
+spl <- sample(1:nrow(cleanBigData), round(0.9*nrow(cleanBigData)))
+trainData <- cleanBigData[spl,]
+testData <- cleanBigData[-spl,]
+
+lm.fit <- lm(Casualties ~. , data=cleanBigData)
+summary(lm.fit)
+
+train.lm.fit <- lm(Casualties ~ Vehicles +Speed_limit , data=trainData)
+test.lm.fit <- lm(Casualties~ Vehicles +Speed_limit , data=testData)
+
+prediction1 <- predict(train.lm.fit, newdata=testData) 
+prediction2 <- predict(test.lm.fit, newdata=testData) 
+
+summary(train.lm.fit)
+summary(test.lm.fit)
+testData$Casualties
+
+summary(prediction1)
+difference1 <- abs(prediction1 - testData$Casualties)
+difference1
+mean(prediction1)
+mse <- mean(difference1^2)
+mse
+
+
+
+# Train decision tree model
+cas.tree.fit <- tree(Casualties ~ Speed_limit , data=trainData)
+
+summary(cas.tree.fit)
+plot(cas.tree.fit)  
+text(cas.tree.fit, pretty=0)   
+
+
+plot(as.factor(gloucestershireData$Casualties), main="GLOUCESTERSHIRE CASUALTIES")
+plot(as.factor(gloucestershireData$Road_Type), main="GLOUCESTERSHIRE ROAD TYPE")
+plot(as.factor(gloucestershireData$Speed_limit), main="GLOUCESTERSHIRE SPEED LIMIT")
+plot(as.factor(gloucestershireData$Surface), main="GLOUCESTERSHIRE WEATHER")
+plot(as.factor(gloucestershireData$Light), main="GLOUCESTERSHIRE LIGHT")
+
+as.data.frame(table(gloucestershireData$Severity))
+sum(as.numeric(gloucestershireData$Casualties))
+
+
+plot(as.factor(lancashireData$Casualties), main="LANCASHIRE CASUALTIES")
+plot(as.factor(lancashireData$Road_Type), main="LANCASHIRE ROAD TYPE")
+plot(as.factor(lancashireData$Speed_limit), main="LANCASHIRE SPEED LIMIT")
+plot(as.factor(lancashireData$Surface), main="LANCASHIRE WEATHER")
+plot(as.factor(lancashireData$Light), main="LANCASHIRE LIGHT")
+
+as.data.frame(table(lancashireData$Severity))
+sum(as.numeric(lancashireData$Casualties))
+
+
+plot(as.factor(northumbriaData$Casualties), main="NORTH UMBRIA CASUALTIES")
+plot(as.factor(northumbriaData$Road_Type), main="NORTH UMBRIA ROAD TYPE")
+plot(as.factor(northumbriaData$Speed_limit), main="NORTH UMBRIA SPEED LIMIT")
+plot(as.factor(northumbriaData$Surface), main="NORTH UMBRIA WEATHER")
+plot(as.factor(northumbriaData$Light), main="NORTH UMBRIA LIGHT")
+as.data.frame(table(northumbriaData$Severity))
+sum(as.numeric(northumbriaData$Casualties))
+
+
+plot(as.factor(southYorkshireData$Casualties), main="SOUTH YORKSHIRE CASUALTIES")
+plot(as.factor(southYorkshireData$Road_Type), main="SOUTH YORKSHIRE ROAD TYPE")
+plot(as.factor(southYorkshireData$Speed_limit), main="SOUTH YORKSHIRE SPEED LIMIT")
+plot(as.factor(southYorkshireData$Surface), main="SOUTH YORKSHIRE WEATHER")
+plot(as.factor(southYorkshireData$Light), main="SOUTH YORKSHIRE LIGHT")
+
+as.data.frame(table(southYorkshireData$Severity))
+sum(as.numeric(southYorkshireData$Casualties))
+
+plot(as.factor(humbersideData$Casualties) , main="HUMBERSIDE CASUALTIES")
+plot(as.factor(humbersideData$Road_Type), main="HUMBERSIDE ROAD TYPE")
+plot(as.factor(humbersideData$Speed_limit), main="HUMBERSIDE SPEED LIMIT")
+plot(as.factor(humbersideData$Surface), main="HUMBERSIDE WEATHER")
+plot(as.factor(humbersideData$Light), main="HUMBERSIDE LIGHT")
+
+
+as.data.frame(table(humbersideData$Severity))
+sum(as.numeric(humbersideData$Casualties))
+
+
+plot(as.factor(lincolnshireData$Casualties), main="LINCOLNSHIRE CASUALTIES")
+plot(as.factor(lincolnshireData$Road_Type), main="LINCOLNSHIRE ROAD TYPE")
+plot(as.factor(lincolnshireData$Speed_limit), main="LINCOLNSHIRE SPEED LIMIT")  
+plot(as.factor(lincolnshireData$Surface), main="LINCOLNSHIRE WEATHER")
+plot(as.factor(lincolnshireData$Light), main="LINCOLNSHIRE LIGHT")
+
+as.data.frame(table(lincolnshireData$Severity))
+sum(as.numeric(lincolnshireData$Casualties))
+
+
+plot(as.factor(fifeData$Casualties), main="FIFE CASUALTIES")
+plot(as.factor(fifeData$Road_Type), main="FIFE ROAD TYPE")
+plot(as.factor(fifeData$Speed_limit), main="FIFE SPEED LIMIT")   
+plot(as.factor(fifeData$Surface), main="FIFE WEATHER")
+plot(as.factor(fifeData$Light), main="FIFE CLYDE LIGHT")
+
+
+
+as.data.frame(table(fifeData$Severity))
+sum(as.numeric(fifeData$Casualties))
+
+
+plot(as.factor(grampianData$Casualties), main="GRAMPIAN CASUALTIES")
+plot(as.factor(grampianData$Road_Type), main="GRAMPIAN ROAD TYPE")
+plot(as.factor(grampianData$Speed_limit), main="GRAMPIAN SPEED LIMIT")
+plot(as.factor(grampianData$Surface), main="GRAMPIAN WEATHER")
+plot(as.factor(grampianData$Light), main="GRAMPIAN CLYDE LIGHT")
+
+as.data.frame(table(grampianData$Severity))
+sum(as.numeric(grampianData$Casualties))
+
+
+plot(as.factor(lothianData$Casualties), main="LOTHIAN CASUALTIES")
+plot(as.factor(lothianData$Road_Type), main="LOTHIAN ROAD TYPE")
+plot(as.factor(lothianData$Speed_limit), main="LOTHIAN SPEED LIMIT")
+plot(as.factor(lothianData$Surface), main="LOTHIAN WEATHER")
+plot(as.factor(lothianData$Light), main="LOTHIAN CLYDE LIGHT")
+
+as.data.frame(table(lothianData$Severity))
+sum(as.numeric(lothianData$Casualties))
+
+
+
+plot(as.factor(strathclydeData$Casualties), main="STRATH CLYDE CASUALTIES")
+plot(as.factor(strathclydeData$Road_Type), main="STRATH CLYDE ROAD TYPE")
+plot(as.factor(strathclydeData$Speed_limit), main="STRATH CLYDE SPEED LIMIT")
+plot(as.factor(strathclydeData$Surface), main="STRATH CLYDE WEATHER")
+plot(as.factor(strathclydeData$Light), main="STRATH CLYDE LIGHT")
+
+as.data.frame(table(strathclydeData$Severity))
+sum(as.numeric(strathclydeData$Casualties))
