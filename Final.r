@@ -286,6 +286,8 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
   drop <- c('Index',
             'E_OSGR',
             'N_OSGR',
+            'Lat',
+            'Long',
             'Date',
             'Time',
             'LA_highway',
@@ -394,18 +396,24 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
   cleanBigData <- subset(cleanBigData, !is.na(Weather))
   
   
-  # Prepping data that only contains significant variables for glm()
+  # Prepping data that only contains significant variables from glm()
   sigData <- data
-  keep <- c('Lat',
-            'Police_Force',
+  keep <- c('Police_Force',
             'Vehicles',
             'Casualties',
+            'Day',
             'Road_Type',
             'Speed_limit',
+            'Juntion_Detail',
             'Ped_xing_physical',
             'Light',
             'Weather',
-            'Surface')
+            'Surface',
+            'Special',
+            'Hazards',
+            'Urban_or_Rural',
+            'Time_Period',
+            'Month')
   
   sigData <- sigData[, names(sigData) %in% keep]
   
@@ -464,22 +472,22 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
   strathclydeData <- strathclydeData[, !names(strathclydeData) %in% 'Police_Force']
   
   # Remove temporary vectors
-  rm(drop, drop2, keep, holidays, isHoliday, isWeekend, months, period, pf)
+  rm(drop, drop2, keep, holidays, isHoliday, isWeekend, months, period, pf, numericLocData)
   
   ##########################
   # DATA SETS
   #
-  # data - 145571 obs. of 28 variables
+  # data - 145570 obs. of 28 variables
   #
   # cleanData - 87586 obs. of 28 variables
   #
   # perfectData - 25281 obs. of 28 variables
   #
-  # bigData - 145571 obs. of 25 variables
+  # bigData - 145570 obs. of 25 variables
   #
-  # cleanBigData - 140057 obs. of 25 variables
+  # cleanBigData - 140056 obs. of 25 variables
   #
-  # sigData - 140057 obs. of 10 variables
+  # sigData - 140056 obs. of 10 variables
   #
   # data sets for each significant police_force by glm of full data
   #
@@ -604,8 +612,7 @@ trainData <- binarySelectedData[spl,]
 testData <- binarySelectedData[-spl,]
 
 # Fit a logistic model
-glm.fit <- glm(Severity ~ . -Lat -Long 
-               , data=trainData, family = "binomial")
+glm.fit <- glm(Severity ~ ., data=trainData, family = "binomial")
 
 summary(glm.fit)
 
@@ -623,7 +630,7 @@ fatal.pred[fatal.probs < 0.99] <- "FATAL"
 
 # Remove variables that are insignificant and train model again
 glm.fit <- glm(Severity ~ . -isWeekend -isHoliday-Ped_xing_human -Month
-                -Lat -Long -Police_Force
+                -Police_Force
                , data=trainData, family = "binomial")
 
 summary(glm.fit)
