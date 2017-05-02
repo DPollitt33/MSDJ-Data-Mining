@@ -235,31 +235,7 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
   
   # Create Month
   months <- format(as.Date(data$Date, format='%m/%d'), format='%m')
-  months <- c(ifelse(months == '01',
-                     1,
-                     ifelse(months == '02',
-                            2,
-                            ifelse(months == '03',
-                                   3,
-                                   ifelse(months == '04',
-                                          4,
-                                          ifelse(months == '05',
-                                                 5,
-                                                 ifelse(months == '06',
-                                                        6,
-                                                        ifelse(months == '07',
-                                                               7,
-                                                               ifelse(months == '08',
-                                                                      8,
-                                                                      ifelse(months == '09',
-                                                                             9,
-                                                                             ifelse(months == '10',
-                                                                                    10,
-                                                                                    ifelse(months == '11',
-                                                                                           11,
-                                                                                           ifelse(months == '12',
-                                                                                                  12,
-                                                                                                  NA)))))))))))))
+  months <- as.numeric(months)
   
   data[,'Month'] <- months
   data$Month <- factor(data$Month, levels=c(1:12), labels=c('JAN',
@@ -785,3 +761,4 @@ plot(as.factor(strathclydeData$Light), main="STRATH CLYDE LIGHT")
 
 as.data.frame(table(strathclydeData$Severity))
 sum(as.numeric(strathclydeData$Casualties))
+
