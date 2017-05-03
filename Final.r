@@ -10,7 +10,6 @@ getwd()
 
 rm(list = ls(all = TRUE))
 
-# DAKOTA POLLITT
 
 # LOAD DATA
 data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
@@ -468,9 +467,6 @@ data <- read.csv('DfTRoadSafety_Accidents_2012.csv', header=TRUE)
   #
   ##########################
   
-  
-  
-  # JOHN CENTRITTO
 
 
 # HELPER FUNCTIONS
@@ -551,18 +547,18 @@ predboosting
 # Balance data with respect to severity and retry boosting
 # Get train and test suite on cleanBigData set
 set.seed(4)
-spl <- sample(1:nrow(cleanBigData), round(0.9*nrow(cleanBigData)))
+spl <- sample(1:nrow(cleanBigData), round(0.8*nrow(cleanBigData)))
 trainData <- cleanBigData[spl,]
 testData <- cleanBigData[-spl,]
 
 # Call balance function
-balancedTrainData <- balanceDataBySeverity(trainData, 1000)
+balancedTrainData <- balanceDataBySeverity(trainData, 5000)
 
 # Create ensemble with balanced data
 boost.fit <- boosting(Severity ~ Light+Weather+Road_Type+Surface+Casualties
                       +Speed_limit+Vehicles+Day
                       +Hazards+Ped_xing_human+Urban_or_Rural
-                      , data=balancedTrainData, mfinal=10)
+                      , data=balancedTrainData, mfinal=50)
 
 # Predict on test data
 predboosting<- predict.boosting(boost.fit, newdata=testData)
@@ -571,6 +567,27 @@ predboosting
 #Plot variable importance
 importanceplot(boost.fit)
 
+
+# USE BAGGING ON BALANCED DATA
+set.seed(5)
+bagging.fit <- bagging(Severity ~ Light+Weather+Road_Type+Surface+Casualties
+                       +Speed_limit+Vehicles+Day
+                       +Hazards+Ped_xing_human+Urban_or_Rural
+                       , data=balancedTrainData, mfinal=50)
+
+predbagging <- predict.bagging(bagging.fit, newdata=testData)
+predbagging
+
+# USE RANDOM FOREST ON BALANCED DATA
+library(randomForest)
+set.seed(6)
+rf.fit <- randomForest(Severity ~ Light+Weather+Road_Type+Surface+Casualties
+                       +Speed_limit+Vehicles+Day
+                       +Hazards+Ped_xing_human+Urban_or_Rural
+                       , data=balancedTrainData,ntree=50)
+predictions.rf <- predict(rf.fit, newdata=testData)
+( confTable <- table(predictions.rf, testData$Severity) )
+( accuracy <- (confTable[1] + confTable[5] + confTable[9])/(nrow(testData)) )
 
 
 # USING LOGISTIC REGRESSION TO PREDICT FATAL ACCIDENTS
@@ -622,8 +639,6 @@ fatal.pred[fatal.probs < 0.99] <- "FATAL"
 ( fatalPrecision <- confTable[1] / (confTable[1]+confTable[3]) )
 
 
-
-#MATT KAPLAN
 #plot causalty tree
 #plot linear regression
 spl <- sample(1:nrow(cleanBigData), round(0.9*nrow(cleanBigData)))
